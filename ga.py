@@ -117,7 +117,7 @@ class FNRGeneticAlgorithm(object):
             
             
             
-    def get_solution(self, iterations=2):
+    def get_solution(self, iterations=1):
         self.__initialize()
         for i in range(iterations):
             population = []
@@ -145,7 +145,7 @@ class FNRGeneticAlgorithm(object):
         return c_f[0]# return the best one
 def main():
     g = FNRGeneticAlgorithm(failed_sensor_nodes = [9, 7, 10, 81, 23, 57, 34, 46, 66, 70])
-    sol=g.get_solution()
+    sol=g.get_solution(iterations=4)
     print sol
     
 if __name__ == "__main__":
