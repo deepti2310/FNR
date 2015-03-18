@@ -3,7 +3,7 @@ import operator
 import copy
 class FNRGeneticAlgorithm(object):
 
-    def __init__(self, failed_sensor_nodes = [], nodes_info = {}, population_size = 100,  ):
+    def __init__(self, failed_sensor_nodes = [], nodes_info = {}, population_size = 10,  ):
         self.failed_sensor_nodes = failed_sensor_nodes
         self.sensor_nodes_info = nodes_info
         self.population_size = population_size
@@ -27,7 +27,7 @@ class FNRGeneticAlgorithm(object):
         output = 2*1 -2*1 + 3*0+4*1-5*0+2*1-3*1+4*1+9*1+10*1 = 2-2+0+4-0+2-3+4+9+10=26
         """
         #fitness value shouldnt be a negative number
-        factors_list = [2,2,3,4,5,2,-3,4,9,10]
+        factors_list = [2,-2,30,-4,5,2,-3,4,-9,10]
         s=sum([i*j for i,j in zip(chromosome, factors_list)])
         if s>0:
             return tuple(chromosome), s
@@ -51,9 +51,16 @@ class FNRGeneticAlgorithm(object):
     
     def __mutation(self, chromosome):
         #take length
+        chromosome=list(chromosome)
         l = len(chromosome)
-        print chromosome
-
+        rand_gene = random.randint(0,l-1)
+        #print "********************************************"
+        #print chromosome
+        #print rand_gene
+        chromosome[rand_gene]=1-chromosome[rand_gene] #flip it
+        #print chromosome
+        #print "********************************************"        
+        return chromosome
     
     def __calculate_pdf(self, population):
         # calculate sigma of fitness values over the population
@@ -90,39 +97,56 @@ class FNRGeneticAlgorithm(object):
         population=sorted(population, key = lambda item: item[1], reverse = True)
         
         if strategy == 'elitism':
-            return [list(i[0]) for i in population[0:records]]
+            new_population= [list(i[0]) for i in population[0:records]]
+            print len(new_population)
+            return new_population
         elif strategy == 'roulette wheel':
+            new_population=[]
             pdf_i=self.__calculate_pdf(population)
             for i in range(0,self.population_size-self.elitism_constant,2):
                 #select pair of chromosomes
                 pair = self.__select_pair(pdf_i)
                 crossover_pair = self.__crossover(pair)  
+                for i in crossover_pair:
+                    n=self.__mutation(i)
+                    new_population.append(n)
+            print len(new_population[:records])
+            return new_population[:records] # return the required no of records
+                
                 
             
             
-                
-                
             
-            
-            
-    def get_solution(self, iterations=1):
+    def get_solution(self, iterations=2):
         self.__initialize()
         for i in range(iterations):
             population = []
             for chromosome in self.current_population:
                 key,value=self.__calculate_fitness_function(chromosome)
                 population.append((key,value))
-            
+            population=sorted(population, key = lambda item: item[1], reverse = True)
+            print population
             # keep the elitest chromosomes i.e., half of the chromosomes in the new
             new_population = []
             new_population=self.selection(population = population, strategy = 'elitism', records = self.elitism_constant)
             #And select the remaining half of the chromosomes by using roulette wheel selection 
-            print new_population
-            self.selection(population[:self.elitism_constant], strategy = 'roulette wheel', records = self.population_size - self.elitism_constant)
+            #print new_population
+            new_population.extend(self.selection(population[:self.elitism_constant], strategy = 'roulette wheel', records = self.population_size - self.elitism_constant))
+            #print new_population, len(new_population)
+            self.current_population = copy.deepcopy(new_population)
+        c_f=[]
+        for c in self.current_population:
+             key,value = self.__calculate_fitness_function(c)
+             c_f.append((key,value))
+        c_f=sorted(c_f, key = lambda item:item[1], reverse = True)
+        print "***"
+        print c_f   
+        print "*********
+        return c_f[0]# return the best one
 def main():
     g = FNRGeneticAlgorithm(failed_sensor_nodes = [9, 7, 10, 81, 23, 57, 34, 46, 66, 70])
-    g.get_solution()
-    
+    sol=g.get_solution()
+    print sol
     
 if __name__ == "__main__":
     main()
